@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testownik HTML</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f1115;
+            --surface-color: #1a1d24;
+            --surface-hover: #242832;
+            --primary-color: #00f2ff;
+            --primary-glow: rgba(0, 242, 255, 0.4);
+            --secondary-color: #bc13fe;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --success-color: #00ff9d;
+            --error-color: #ff0055;
+            --border-radius: 16px;
+            --transition-speed: 0.2s;
+            --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Ambient Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(188, 19, 254, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(15, 17, 21, 0) 0%, var(--bg-color) 100%),
+                radial-gradient(circle at 80% 80%, rgba(188, 19, 254, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(0, 242, 255, 0.05) 0%, transparent 40%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black, transparent 80%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 800;
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(188, 19, 254, 0.3);
+            letter-spacing: -1px;
+        }
+
+        /* Layout Grid */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            align-items: start;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            transition: max-width 0.3s ease;
+            position: relative; /* Anchor for absolute sidebar */
+        }
+
+        /* Game Active State - Kept simple to avoid layout shift */
+        @media (min-width: 901px) {
+            .main-layout.game-active {
+                /* No layout changes - keep it centered and 800px */
+                max-width: 800px;
+            }
+
+            .main-layout.game-active .content-area {
+                width: 100%;
+            }
+        }
+
+        .content-area {
+            min-width: 0;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        /* Stats Sidebar - REFACTORED */
+        .stats-sidebar {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            
+            /* Animation base state */
+            opacity: 0;
+            transform: translateX(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            
+            display: none; /* Hidden by default */
+        }
+
+        /* Desktop specific sidebar styles */
+        @media (min-width: 901px) {
+            .stats-sidebar {
+                position: absolute;
+                top: 50%;
+                left: 100%;
+                margin-left: 20px;
+                width: 280px;
+                
+                /* Override base state for desktop specific animation */
+                transform: translate(20px, -50%);
+                opacity: 0;
+            }
+
+            /* When visible for animation */
+            .stats-sidebar.anim-enter {
+                display: grid; /* or block */
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            /* Active state */
+            .stats-sidebar.anim-active {
+                opacity: 1;
+                transform: translate(0, -50%);
+            }
+        }
+        
+        .stats-sidebar h2 {
+            text-align: center;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.5rem;
+        }
+        
+        /* Stats Toggle for Mobile - Moved to Media Query */
+
+        /* File Input / Drag Zone */
+        .file-input-section {
+            margin-bottom: 2rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--surface-hover);
+            border-radius: var(--border-radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            background: var(--surface-color);
+            transition: all var(--transition-speed);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: var(--primary-color);
+            background: var(--surface-hover);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .drop-zone p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+
+        .drop-zone strong {
+            color: var(--primary-color);
+        }
+
+        .file-input-options {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            pointer-events: auto;
+        }
+
+        .btn-file-select {
+            padding: 12px 24px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid var(--primary-color);
+            background: transparent;
+            color: var(--primary-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-family);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 140px;
+            pointer-events: auto;
+        }
+
+        .btn-file-select:hover {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            color: var(--primary-color);
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        /* Question Area */
+        .question-card {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .streak-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+            font-weight: 600;
+            border: 1px solid rgba(188, 19, 254, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            line-height: 1.5;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .answer {
+            display: flex;
+            align-items: center;
+            padding: 1.2rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease-out;
+            position: relative;
+        }
+
+        .answer:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .answer.selected {
+            border-color: var(--primary-color);
+            background: rgba(0, 242, 255, 0.1);
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);
+        }
+
+        .answer.correct {
+            border-color: var(--success-color);
+            background: rgba(0, 255, 157, 0.1);
+        }
+
+        /* Visual refinement for checked boxes */
+        .answer.selected.correct {
+            background: rgba(0, 255, 157, 0.15); /* Slightly stronger green background for correct user selection */
+        }
+
+        .answer.incorrect {
+            border-color: var(--error-color);
+            background: rgba(255, 0, 85, 0.1);
+        }
+
+        /* Keyboard shortcut hint */
+        .key-hint {
+            position: absolute;
+            right: 15px;
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            background: rgba(0,0,0,0.8);
+            padding: 4px 8px;
+            border-radius: 6px;
+            opacity: 1;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .answer input[type="checkbox"] {
+            display: none; /* Custom checkbox styling if needed, or keeping it hidden */
+        }
+        
+        .checkbox-custom {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 4px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .answer.selected .checkbox-custom {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* New Checkbox States */
+        .answer.selected.correct .checkbox-custom {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .answer.selected.incorrect .checkbox-custom {
+            background: var(--error-color);
+            border-color: var(--error-color);
+        }
+
+        .answer-text {
+            flex: 1;
+            font-size: 1.05rem;
+            padding-right: 35px; /* Space for the key-hint */
+        }
+
+        /* Buttons */
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: flex-end;
+        }
+
+        button {
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-family);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 150px; /* Prevent layout jumps */
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-verify {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn-verify:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: #000;
+        }
+
+        .btn-next {
+            background: var(--success-color);
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.3);
+        }
+        .btn-next:hover:not(:disabled) {
+            box-shadow: 0 0 25px rgba(0, 255, 157, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .btn-restart {
+            background: var(--secondary-color);
+            color: #fff;
+            margin-top: 1rem;
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
+        }
+        .btn-restart:hover {
+            box-shadow: 0 0 25px rgba(188, 19, 254, 0.5);
+            transform: translateY(-2px);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.7); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(0, 255, 157, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); }
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes goldPulse {
+            0% { 
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); 
+                border-color: #ffd700;
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.02);
+            }
+            70% { 
+                box-shadow: 0 0 0 20px rgba(255, 215, 0, 0); 
+                border-color: #ffed4a;
+            }
+            100% { 
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); 
+                border-color: #ffd700;
+                transform: scale(1);
+            }
+        }
+
+        .question-eliminated {
+            animation: goldPulse 1.5s infinite;
+            border-color: #ffd700 !important;
+            z-index: 10;
+        }
+
+        .question-eliminated .question-text {
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            transition: color 0.3s ease;
+        }
+        
+        .question-eliminated .streak-badge {
+            background: #ffd700;
+            color: #000;
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            font-weight: 800;
+        }
+
+        .btn-stats {
+            background: transparent;
+            color: var(--text-secondary);
+            padding: 14px 20px;
+            display: inline-flex;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+        .btn-stats:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .btn-stats.active {
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--primary-color);
+            border-color: rgba(0, 242, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+        }
+
+        /* Toast Notification - FIXED POSITION */
+        .message {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 3000;
+            transform: translate(-50%, -150%);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease, visibility 0.4s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 350px;
+            display: flex !important;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        .message.show {
+            transform: translate(-50%, 0);
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+        }
+
+        .message.success {
+            background: rgba(0, 255, 157, 0.15);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .message.error {
+            background: rgba(255, 0, 85, 0.15);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+            backdrop-filter: blur(10px);
+        }
+        
+        .message.info {
+            background: rgba(0, 242, 255, 0.15);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Progress Bar */
+        .progress {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 100px;
+            height: 8px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            height: 100%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 100px;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 900px) {
+            .container { padding: 10px; }
+            h1 { font-size: 2rem; }
+            .buttons { flex-direction: column-reverse; }
+            
+            .btn-stats { 
+                margin-bottom: 10px;
+            }
+
+            /* On mobile, sidebar behaves differently - overlay or flow */
+            .stats-sidebar {
+                position: fixed;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                transform: translateY(100%); /* Start off-screen */
+                border-radius: 20px 20px 0 0;
+                border-bottom: none;
+                z-index: 2000;
+                box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+                display: none; /* Controlled by anim-enter */
+            }
+            
+            .stats-sidebar.anim-enter {
+                display: grid;
+            }
+
+            .stats-sidebar.anim-active {
+                transform: translateY(0);
+            }
+        }
+        /* Settings Sidebar */
+        .settings-sidebar {
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            
+            /* Animation base state */
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            
+            display: none; /* Hidden by default */
+            z-index: 100;
+        }
+
+        /* Desktop specific settings sidebar */
+        @media (min-width: 901px) {
+            .settings-sidebar {
+                position: absolute;
+                top: 50%;
+                right: 100%;
+                margin-right: 20px;
+                width: 280px;
+                
+                /* Override base state */
+                transform: translate(-20px, -50%);
+                opacity: 0;
+            }
+
+            .settings-sidebar.anim-enter {
+                display: block;
+            }
+
+            .settings-sidebar.anim-active {
+                opacity: 1;
+                transform: translate(0, -50%);
+            }
+        }
+
+        .settings-sidebar h2 {
+            text-align: center;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.5rem;
+        }
+
+        .setting-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-label {
+            display: block;
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .setting-hint {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        /* Number Input */
+        .number-input-wrapper input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 8px;
+            font-family: var(--font-family);
+            font-size: 1rem;
+        }
+        
+        .number-input-wrapper input:focus {
+            border-color: var(--primary-color);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Switch */
+        .switch-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255,255,255,0.1);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--success-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Reset Button */
+        .btn-danger-ghost {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-danger-ghost:hover {
+            background: rgba(255, 0, 85, 0.1);
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Mobile Settings */
+        @media (max-width: 900px) {
+            .settings-sidebar {
+                position: fixed;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                transform: translateY(100%);
+                border-radius: 20px 20px 0 0;
+                z-index: 2001;
+                display: none;
+                box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+                border-bottom: none;
+            }
+            
+            .settings-sidebar.anim-enter {
+                display: block;
+            }
+
+            .settings-sidebar.anim-active {
+                transform: translateY(0);
+            }
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 0.8rem;
+            text-align: center;
+            font-weight: 500;
+            letter-spacing: 1px;
+            width: 100%;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div id="message" class="message"></div>
+
+    <div class="container">
+        <h1>Testownik <span style="font-size: 0.4em; vertical-align: super; opacity: 0.6; color: var(--text-secondary)">HTML</span></h1>
+        
+        <div class="main-layout">
+            <aside class="settings-sidebar" id="settings-sidebar">
+                <h2>Ustawienia</h2>
+                
+                <div class="setting-item">
+                    <label class="setting-label" for="setting-streak">
+                        Cel Serii (Streak)
+                    </label>
+                    <div class="number-input-wrapper">
+                        <input type="number" id="setting-streak" min="1" max="10" value="2">
+                    </div>
+                    <p class="setting-hint">Liczba poprawnych odpowiedzi, aby zaliczyć pytanie.</p>
+                </div>
+
+                <div class="setting-item">
+                    <div class="switch-row">
+                        <label class="setting-label" for="setting-auto-next">Auto-Next</label>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-auto-next">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <p class="setting-hint">Automatycznie przejdź do kolejnego pytania po sukcesie.</p>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Skróty klawiszowe</label>
+                    <div class="setting-hint" style="background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; font-family: monospace; font-size: 0.75rem;">
+                        [1-9] - Wybór odp.<br>
+                        [␣/↵] - Sprawdź/Dalej<br>
+                        [S] - Statystyki<br>
+                        [C] - Kopiuj pytanie<br>
+                        [←] - Poprzednie pyt.<br>
+                        [→] - Wróć do aktualnego
+                    </div>
+                </div>
+
+                <div class="setting-actions">
+                    <button id="btn-reset-progress" class="btn-danger-ghost">
+                        Resetuj Postęp
+                    </button>
+                </div>
+            </aside>
+
+            <main class="content-area">
+                <div class="file-input-section" id="drop-zone">
+                    <div class="drop-zone">
+                    <p>Przeciągnij plik/pliki lub folder tutaj<br>lub <strong>kliknij, aby wybrać</strong></p>
+                    <div class="file-input-options">
+                        <button type="button" class="btn-file-select" onclick="document.getElementById('file-input').click()">Wybierz pliki</button>
+                        <button type="button" class="btn-file-select" onclick="document.getElementById('folder-input').click()">Wybierz folder</button>
+                    </div>
+                    <input type="file" id="file-input" class="file-input" accept=".json,.txt" multiple>
+                    <input type="file" id="folder-input" class="file-input" webkitdirectory directory multiple>
+                </div>
+                </div>
+                
+                <div class="progress hidden" id="progress">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+                
+                <div id="question-container" class="hidden" style="animation: fadeIn 0.4s ease-out">
+                    <div class="question-card">
+                        <div class="question-header">
+                            <div class="streak-badge" id="streak-display">Streak: 0</div>
+                        </div>
+                        <div class="question-text" id="question-text"></div>
+                    </div>
+                    
+                    <div class="answers" id="answers"></div>
+                    
+                    <div class="buttons">
+                        <button class="btn-stats" id="load-new-btn" title="Wczytaj nowe pytania">Nowe pytania</button>
+                        <button class="btn-stats" id="settings-btn" title="Ustawienia">Ustawienia</button>
+                        <button class="btn-stats" id="stats-btn" title="Skrót: S">Statystyki</button>
+                        <button class="btn-verify" id="verify-btn" title="Skrót: Enter (lub Spacja)">Sprawdź</button>
+                        <button class="btn-next hidden pulse-animation" id="next-btn" title="Skrót: Enter (lub Spacja)">Następne</button>
+                    </div>
+                </div>
+            </main>
+
+            <aside class="stats-sidebar" id="stats-sidebar">
+                <h2>Statystyki sesji</h2>
+                <div class="stat-item">
+                    <span class="stat-label">Wszystkie</span>
+                    <span class="stat-value" id="stat-all">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">W puli</span>
+                    <span class="stat-value" id="total-questions">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Wyeliminowane</span>
+                    <span class="stat-value" id="stat-eliminated" style="color: #ffd700">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Poprawne</span>
+                    <span class="stat-value" id="correct-answers" style="color: var(--success-color)">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Błędne</span>
+                    <span class="stat-value" id="incorrect-answers" style="color: var(--error-color)">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Skuteczność</span>
+                    <span class="stat-value" id="correct-percentage">0%</span>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <footer>
+        By rejzerek | 2026 | PWr
+    </footer>
+
+    <script>
+        // State
+        let questions = [];
+        let originalQuestions = []; // Store for restart
+        let currentQuestion = null;
+        let currentQuestionIndex = -1;
+        let correctStreak = {};
+        let initialQuestionsCount = 0;
+        let stats = {
+            correct: 0,
+            incorrect: 0,
+            total: 0
+        };
+        let verified = false;
+
+        // Randomization Pool
+        let drawPool = [];
+
+        // History State
+        let questionHistory = [];
+        let historyIndex = -1;
+        let isBrowsingHistory = false;
+
+        // Settings State
+        let appSettings = {
+            streakTarget: 2,
+            autoNext: false
+        };
+
+        function loadSettings() {
+            const saved = localStorage.getItem('testownik-settings');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    appSettings = { ...appSettings, ...parsed };
+                } catch(e) { console.error('Settings parse error', e); }
+            }
+            // Update UI
+            document.getElementById('setting-streak').value = appSettings.streakTarget;
+            document.getElementById('setting-auto-next').checked = appSettings.autoNext;
+        }
+
+        function saveSettings() {
+            localStorage.setItem('testownik-settings', JSON.stringify(appSettings));
+        }
+
+        // Elements
+        const fileInput = document.getElementById('file-input');
+        const folderInput = document.getElementById('folder-input');
+        const dropZone = document.querySelector('.drop-zone');
+        const messageEl = document.getElementById('message');
+        const questionContainer = document.getElementById('question-container');
+        const questionText = document.getElementById('question-text');
+        const answersContainer = document.getElementById('answers');
+        const verifyBtn = document.getElementById('verify-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const statsBtn = document.getElementById('stats-btn');
+        const statsSidebar = document.getElementById('stats-sidebar');
+        const progressContainer = document.getElementById('progress');
+        const progressBar = document.getElementById('progress-bar');
+        const streakDisplay = document.getElementById('streak-display');
+
+        // Drag & Drop Logic
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+        });
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        folderInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                loadMultipleFiles(files);
+            }
+        }
+
+        // Event Listeners
+        verifyBtn.addEventListener('click', verifyAnswer);
+        nextBtn.addEventListener('click', loadNextQuestion);
+        statsBtn.addEventListener('click', toggleStats);
+        
+        // Load New Questions Event Listener
+        document.getElementById('load-new-btn').addEventListener('click', () => {
+            if (confirm('Czy na pewno chcesz wczytać nowe pytania? Aktualny postęp zostanie utracony.')) {
+                resetToFileSelection();
+            }
+        });
+
+        // Settings Event Listeners
+        document.getElementById('settings-btn').addEventListener('click', toggleSettings);
+        
+        document.getElementById('setting-streak').addEventListener('change', (e) => {
+            let val = parseInt(e.target.value);
+            if (isNaN(val) || val < 1) val = 1;
+            if (val > 10) val = 10;
+            appSettings.streakTarget = val;
+            e.target.value = val;
+            saveSettings();
+            
+            // Update UI immediately if possible
+            if (currentQuestionIndex !== -1) {
+                 const currentStreak = correctStreak[currentQuestionIndex] || 0;
+                 streakDisplay.textContent = `Seria: ${currentStreak} / ${appSettings.streakTarget}`;
+            }
+        });
+
+        document.getElementById('setting-auto-next').addEventListener('change', (e) => {
+            appSettings.autoNext = e.target.checked;
+            saveSettings();
+        });
+
+        document.getElementById('btn-reset-progress').addEventListener('click', resetProgress);
+
+        // Init Settings
+        loadSettings();
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (questionContainer.classList.contains('hidden')) return;
+
+            // Numbers 1-9 for selecting answers
+            if (e.key >= '1' && e.key <= '9') {
+                const index = parseInt(e.key) - 1;
+                const answerDivs = answersContainer.querySelectorAll('.answer');
+                if (answerDivs[index] && !answerDivs[index].querySelector('input').disabled) {
+                    answerDivs[index].click();
+                }
+            }
+
+            // Enter OR Space for Verify or Next
+            if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') {
+                e.preventDefault();
+                if (!nextBtn.classList.contains('hidden')) {
+                    loadNextQuestion();
+                } else if (!verifyBtn.disabled) {
+                    verifyAnswer();
+                }
+            }
+
+            // S for Stats
+            if (e.key.toLowerCase() === 's') {
+                toggleStats();
+            }
+
+            // C for Copy
+            if (e.key.toLowerCase() === 'c') {
+                copyQuestionToClipboard();
+            }
+
+            // ArrowLeft for Previous
+            if (e.key === 'ArrowLeft') {
+                showPreviousHistory();
+            }
+
+            // ArrowRight for Next in history or Next question
+            if (e.key === 'ArrowRight') {
+                if (isBrowsingHistory) {
+                    showNextHistory();
+                } else if (!nextBtn.classList.contains('hidden')) {
+                    loadNextQuestion();
+                }
+            }
+        });
+
+        function copyQuestionToClipboard() {
+            if (!currentQuestion) return;
+
+            const correctIndices = currentQuestion.correct;
+            let text = `Pytanie: ${currentQuestion.question}\n\nOdpowiedzi:\n`;
+            
+            Object.entries(currentQuestion.answears).forEach(([id, val]) => {
+                const isCorrect = correctIndices.includes(parseInt(id));
+                text += `${isCorrect ? '[X]' : '[ ]'} ${val}\n`;
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('Skopiowano do schowka!', 'success');
+            }).catch(err => {
+                console.error('Błąd kopiowania', err);
+                showMessage('Błąd kopiowania do schowka', 'error');
+            });
+        }
+
+        function showPreviousHistory() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                isBrowsingHistory = true;
+                const entry = questionHistory[historyIndex];
+                currentQuestion = entry.question;
+                currentQuestionIndex = entry.indexInPool;
+                verified = entry.isVerified || false;
+                renderQuestion(currentQuestion, entry.userSelections, verified);
+                showMessage(`Podgląd historii (${historyIndex + 1}/${questionHistory.length})`, 'info');
+            } else {
+                showMessage('To jest pierwsze pytanie w tej sesji.', 'info');
+            }
+        }
+
+        function showNextHistory() {
+            if (historyIndex < questionHistory.length - 1) {
+                historyIndex++;
+                const entry = questionHistory[historyIndex];
+                currentQuestion = entry.question;
+                currentQuestionIndex = entry.indexInPool;
+                verified = entry.isVerified || false;
+                
+                if (historyIndex === questionHistory.length - 1) {
+                    isBrowsingHistory = false;
+                    showMessage('Powrócono do aktualnego pytania', 'info');
+                }
+                
+                renderQuestion(currentQuestion, entry.userSelections, verified);
+                if (isBrowsingHistory) {
+                    showMessage(`Podgląd historii (${historyIndex + 1}/${questionHistory.length})`, 'info');
+                }
+            }
+        }
+
+        async function loadMultipleFiles(files) {
+            const jsonFiles = [];
+            const txtFiles = [];
+            
+            // Filter files by extension
+            for (const file of files) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'json') {
+                    jsonFiles.push(file);
+                } else if (ext === 'txt') {
+                    txtFiles.push(file);
+                }
+            }
+            
+            const allQuestions = [];
+            
+            // Process JSON files
+            for (const file of jsonFiles) {
+                try {
+                    const content = await readFileAsText(file);
+                    const data = JSON.parse(content);
+                    if (Array.isArray(data)) {
+                        allQuestions.push(...data);
+                    }
+                } catch (error) {
+                    console.error('Error loading JSON file:', file.name, error);
+                }
+            }
+            
+            // Process TXT files
+            for (const file of txtFiles) {
+                try {
+                    const content = await readFileAsText(file);
+                    const question = parseTxtQuestion(content);
+                    if (question) {
+                        allQuestions.push(question);
+                    }
+                } catch (error) {
+                    console.error('Error loading TXT file:', file.name, error);
+                }
+            }
+            
+            if (allQuestions.length === 0) {
+                showMessage('Błąd krytyczny: Nie znaleziono prawidłowych pytań w wybranych plikach.', 'error');
+                return;
+            }
+            
+            questions = allQuestions;
+            // Deep copy for restart
+            originalQuestions = JSON.parse(JSON.stringify(questions));
+            startSession();
+        }
+        
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsText(file);
+            });
+        }
+        
+        function parseTxtQuestion(content) {
+            const lines = content.trim().split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            
+            if (lines.length < 3) {
+                return null;
+            }
+            
+            // First line contains binary-coded correct answers (e.g., "X0001")
+            const codeLine = lines[0];
+            const binaryCode = codeLine.replace('X', ''); // Remove X prefix
+            
+            // Convert binary to array of correct answer indices
+            const correct = [];
+            for (let i = 0; i < binaryCode.length; i++) {
+                if (binaryCode[i] === '1') {
+                    correct.push(i + 1); // Answers are 1-indexed
+                }
+            }
+            
+            // Second line is the question
+            const questionText = lines[1];
+            
+            // Remaining lines are answers
+            const answers = {};
+            for (let i = 2; i < lines.length; i++) {
+                answers[i - 1] = lines[i]; // Answers are 1-indexed
+            }
+            
+            return {
+                question: questionText,
+                answears: answers,
+                correct: correct
+            };
+        }
+
+        function startSession() {
+            initialQuestionsCount = questions.length;
+            correctStreak = {};
+            questionHistory = [];
+            historyIndex = -1;
+            isBrowsingHistory = false;
+            drawPool = []; // Reset draw pool
+            questions.forEach((q, idx) => {
+                correctStreak[idx] = 0;
+            });
+            // Reset stats
+            stats = { correct: 0, incorrect: 0, total: 0 };
+            
+            showMessage('Baza danych zaktualizowana.', 'success');
+            updateProgress();
+            updateStats();
+            loadNextQuestion();
+            dropZone.style.display = 'none'; 
+            const layout = document.querySelector('.main-layout');
+            layout.classList.add('game-active');
+            setSidebarState(true);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function loadNextQuestion() {
+            // Reset history browsing if we are moving forward to a new question
+            isBrowsingHistory = false;
+
+            // Remove elimination animation if present
+            document.querySelector('.question-card').classList.remove('question-eliminated');
+
+            if (questions.length === 0) {
+                showMessage('Misja zakończona sukcesem! Wszystkie pytania zaliczone.', 'success');
+                questionContainer.classList.add('hidden');
+                dropZone.style.display = 'flex'; // Use flex to center content
+                
+                // Add Restart Button
+                dropZone.innerHTML = `
+                    <p><strong>Gratulacje!</strong><br>Wszystkie pytania zaliczone.</p>
+                    <button class="btn-restart" onclick="restartSession()">Zrestartuj te same pytania</button>
+                    <div class="file-input-options" style="margin-top:1rem;">
+                        <button type="button" class="btn-file-select" onclick="document.getElementById('file-input').click()">Wybierz pliki</button>
+                        <button type="button" class="btn-file-select" onclick="document.getElementById('folder-input').click()">Wybierz folder</button>
+                    </div>
+                `;
+                
+                const layout = document.querySelector('.main-layout');
+                layout.classList.remove('game-active');
+                setSidebarState(false);
+                return;
+            }
+
+            // Fill drawPool if empty
+            if (drawPool.length === 0) {
+                drawPool = shuffleArray([...Array(questions.length).keys()]);
+            }
+
+            currentQuestionIndex = drawPool.pop();
+            currentQuestion = questions[currentQuestionIndex];
+            verified = false;
+
+            // Save to history
+            questionHistory.push({
+                question: JSON.parse(JSON.stringify(currentQuestion)),
+                indexInPool: currentQuestionIndex,
+                userSelections: []
+            });
+            historyIndex = questionHistory.length - 1;
+
+            renderQuestion(currentQuestion);
+        }
+
+        function restartSession() {
+            // Reset questions from original copy
+            questions = JSON.parse(JSON.stringify(originalQuestions));
+            startSession();
+            // Reset UI
+            questionContainer.classList.remove('hidden');
+        }
+
+        let messageTimeout;
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = `message show ${type}`;
+            
+            clearTimeout(messageTimeout);
+            messageTimeout = setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 3000);
+        }
+
+        function loadNextQuestion() {
+            // Reset history browsing if we are moving forward to a new question
+            isBrowsingHistory = false;
+
+            // Remove elimination animation if present
+            document.querySelector('.question-card').classList.remove('question-eliminated');
+
+            if (questions.length === 0) {
+                showMessage('Misja zakończona sukcesem! Wszystkie pytania zaliczone.', 'success');
+                questionContainer.classList.add('hidden');
+                dropZone.style.display = 'flex'; // Use flex to center content
+                
+                // Add Restart Button
+                dropZone.innerHTML = `
+                    <p><strong>Gratulacje!</strong><br>Wszystkie pytania zaliczone.</p>
+                    <button class="btn-restart" onclick="restartSession()">Zrestartuj te same pytania</button>
+                    <div class="file-input-options" style="margin-top:1rem;">
+                        <button type="button" class="btn-file-select" onclick="document.getElementById('file-input').click()">Wybierz pliki</button>
+                        <button type="button" class="btn-file-select" onclick="document.getElementById('folder-input').click()">Wybierz folder</button>
+                    </div>
+                `;
+                
+                const layout = document.querySelector('.main-layout');
+                layout.classList.remove('game-active');
+                setSidebarState(false);
+                return;
+            }
+
+            currentQuestionIndex = Math.floor(Math.random() * questions.length);
+            currentQuestion = questions[currentQuestionIndex];
+            verified = false;
+
+            // Save to history
+            questionHistory.push({
+                question: JSON.parse(JSON.stringify(currentQuestion)),
+                indexInPool: currentQuestionIndex,
+                userSelections: []
+            });
+            historyIndex = questionHistory.length - 1;
+
+            renderQuestion(currentQuestion);
+        }
+
+        function renderQuestion(q, userSelections = null, isVerified = false) {
+            const currentStreak = correctStreak[currentQuestionIndex] || 0;
+            streakDisplay.textContent = `Seria: ${currentStreak} / ${appSettings.streakTarget}`;
+            streakDisplay.style.color = currentStreak > 0 ? 'var(--success-color)' : 'var(--text-secondary)';
+
+            questionText.textContent = q.question;
+            
+            const answersArray = Object.entries(q.answears).map(([key, value]) => ({
+                id: parseInt(key),
+                text: value
+            }));
+            
+            // Randomize answers only for new questions
+            if (!userSelections) {
+                answersArray.sort(() => Math.random() - 0.5);
+                // Save randomized order to history item
+                questionHistory[historyIndex].randomizedAnswers = answersArray;
+            } else {
+                // Use stored order from history
+                const storedOrder = questionHistory[historyIndex].randomizedAnswers;
+                answersArray.sort((a, b) => {
+                    const idxA = storedOrder.findIndex(item => item.id === a.id);
+                    const idxB = storedOrder.findIndex(item => item.id === b.id);
+                    return idxA - idxB;
+                });
+            }
+            
+            answersContainer.innerHTML = '';
+            answersArray.forEach((answer, index) => {
+                const answerDiv = document.createElement('div');
+                answerDiv.className = 'answer';
+                const isSelected = userSelections && userSelections.includes(answer.id);
+                
+                answerDiv.innerHTML = `
+                    <div class="checkbox-custom"></div>
+                    <input type="checkbox" id="answer-${answer.id}" data-id="${answer.id}" ${isSelected ? 'checked' : ''}>
+                    <span class="answer-text">${answer.text}</span>
+                    <span class="key-hint">${index + 1}</span>
+                `;
+
+                if (isSelected) answerDiv.classList.add('selected');
+
+                if (isVerified) {
+                    const correctAnswers = q.correct;
+                    if (correctAnswers.includes(answer.id)) {
+                        answerDiv.classList.add('correct');
+                    } else if (isSelected) {
+                        answerDiv.classList.add('incorrect');
+                    }
+                    answerDiv.querySelector('input').disabled = true;
+                    answerDiv.querySelector('.key-hint').style.display = 'none';
+                }
+
+                answerDiv.addEventListener('click', function(e) {
+                    if (verified || isBrowsingHistory) return;
+                    const checkbox = this.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    updateAnswerStyle(answerDiv);
+                });
+                answersContainer.appendChild(answerDiv);
+            });
+
+            if (isVerified) {
+                verifyBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+            } else {
+                verifyBtn.classList.remove('hidden');
+                verifyBtn.disabled = false;
+                nextBtn.classList.add('hidden');
+            }
+
+            questionContainer.classList.remove('hidden');
+            updateProgress();
+            updateStats();
+            
+            if(window.innerWidth < 900) {
+                questionContainer.scrollIntoView({behavior: 'smooth'});
+            }
+        }
+
+        function updateAnswerStyle(answerDiv) {
+            const checkbox = answerDiv.querySelector('input[type="checkbox"]');
+            if (checkbox.checked) {
+                answerDiv.classList.add('selected');
+            } else {
+                answerDiv.classList.remove('selected');
+            }
+        }
+
+        function verifyAnswer() {
+            if (verified) return;
+            verified = true;
+
+            const checkboxes = answersContainer.querySelectorAll('input[type="checkbox"]');
+            const selectedAnswers = [];
+            
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    selectedAnswers.push(parseInt(cb.dataset.id));
+                }
+            });
+
+            const correctAnswers = currentQuestion.correct;
+            selectedAnswers.sort((a, b) => a - b);
+            correctAnswers.sort((a, b) => a - b);
+
+            // Update history with user selections and verified state
+            questionHistory[historyIndex].userSelections = selectedAnswers;
+            questionHistory[historyIndex].isVerified = true;
+
+            const isCorrect = JSON.stringify(selectedAnswers) === JSON.stringify(correctAnswers);
+
+            checkboxes.forEach(cb => {
+                const answerId = parseInt(cb.dataset.id);
+                const answerDiv = cb.closest('.answer');
+                
+                // Hide hints
+                answerDiv.querySelector('.key-hint').style.display = 'none';
+                
+                if (correctAnswers.includes(answerId)) {
+                    answerDiv.classList.add('correct');
+                } else if (cb.checked) {
+                    answerDiv.classList.add('incorrect');
+                }
+                
+                cb.disabled = true;
+            });
+            
+            let isEliminated = false;
+
+            if (isCorrect) {
+                correctStreak[currentQuestionIndex]++;
+                stats.correct++;
+                stats.total++;
+                showMessage('Odpowiedź poprawna.', 'success');
+                
+                if (correctStreak[currentQuestionIndex] >= appSettings.streakTarget) {
+                    isEliminated = true;
+                    // Add visual animation for elimination
+                    document.querySelector('.question-card').classList.add('question-eliminated');
+                    
+                    questions.splice(currentQuestionIndex, 1);
+                    
+                    // Update drawPool to reflect spliced questions array
+                    drawPool = drawPool.filter(idx => idx !== currentQuestionIndex)
+                                     .map(idx => idx > currentQuestionIndex ? idx - 1 : idx);
+
+                    const newCorrectStreak = {};
+                    // Re-index logic preserved
+                    Object.keys(correctStreak).forEach(key => {
+                        const idx = parseInt(key);
+                        if (idx < currentQuestionIndex) {
+                            newCorrectStreak[idx] = correctStreak[idx];
+                        } else if (idx > currentQuestionIndex) {
+                            newCorrectStreak[idx - 1] = correctStreak[idx];
+                        }
+                    });
+                    correctStreak = newCorrectStreak;
+                    showMessage('Pytanie wyeliminowane z puli.', 'success');
+                }
+            } else {
+                correctStreak[currentQuestionIndex] = 0;
+                stats.incorrect++;
+                stats.total++;
+                showMessage('Niepoprawna odpowiedź.', 'error');
+            }
+
+            // Streak Update
+            if (isEliminated) {
+                 streakDisplay.textContent = `Seria: ${appSettings.streakTarget} / ${appSettings.streakTarget}`;
+                 streakDisplay.style.color = '#000'; // Black color for better contrast
+            } else {
+                const newStreak = correctStreak[currentQuestionIndex] || 0;
+                streakDisplay.textContent = `Seria: ${newStreak} / ${appSettings.streakTarget}`;
+                streakDisplay.style.color = newStreak > 0 ? 'var(--success-color)' : 'var(--text-secondary)';
+            }
+
+            verifyBtn.classList.add('hidden');
+            nextBtn.classList.remove('hidden');
+            nextBtn.focus();
+            
+            updateStats();
+            updateProgress();
+
+            // Auto-Next Logic
+            if (isCorrect && appSettings.autoNext) {
+                setTimeout(() => {
+                    // Check if game is still active
+                    if (!questionContainer.classList.contains('hidden')) {
+                        loadNextQuestion();
+                    }
+                }, 1000);
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('total-questions').textContent = questions.length;
+            document.getElementById('correct-answers').textContent = stats.correct;
+            document.getElementById('incorrect-answers').textContent = stats.incorrect;
+            
+            // New stats
+            document.getElementById('stat-all').textContent = initialQuestionsCount;
+            const eliminated = initialQuestionsCount - questions.length;
+            document.getElementById('stat-eliminated').textContent = eliminated;
+            
+            const percentage = stats.total > 0 
+                ? Math.round((stats.correct / stats.total) * 100) 
+                : 0;
+            document.getElementById('correct-percentage').textContent = percentage + '%';
+        }
+
+        function updateProgress() {
+            const remaining = questions.length;
+            const completed = initialQuestionsCount - remaining;
+            const percentage = initialQuestionsCount > 0 
+                ? Math.round((completed / initialQuestionsCount) * 100) 
+                : 0;
+            
+            if (initialQuestionsCount > 0) {
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = percentage + '%';
+            }
+        }
+
+        function toggleStats() {
+            const layout = document.querySelector('.main-layout');
+            const isOpen = layout.classList.contains('stats-open');
+            
+            // Close settings if open ONLY ON MOBILE
+            if (window.innerWidth < 901 && document.getElementById('settings-sidebar').classList.contains('anim-active')) {
+                toggleSettings();
+            }
+
+            setSidebarState(!isOpen);
+        }
+
+        function setSidebarState(isOpen) {
+            const layout = document.querySelector('.main-layout');
+            const sidebar = document.getElementById('stats-sidebar');
+            const statsBtn = document.getElementById('stats-btn');
+            
+            if (isOpen) {
+                layout.classList.add('stats-open');
+                statsBtn.classList.add('active');
+                updateStats();
+                
+                sidebar.classList.add('anim-enter');
+                // Force reflow
+                void sidebar.offsetWidth; 
+                sidebar.classList.add('anim-active');
+                
+                // Mobile scroll (optional, keeping minimal delay if needed)
+                if (window.innerWidth < 900) {
+                    // No scroll needed for fixed overlay
+                }
+            } else {
+                layout.classList.remove('stats-open');
+                statsBtn.classList.remove('active');
+                sidebar.classList.remove('anim-active');
+                
+                const transitionEndHandler = () => {
+                    if (!sidebar.classList.contains('anim-active')) {
+                        sidebar.classList.remove('anim-enter');
+                    }
+                    sidebar.removeEventListener('transitionend', transitionEndHandler);
+                };
+                sidebar.addEventListener('transitionend', transitionEndHandler);
+            }
+        }
+        function toggleSettings() {
+            const layout = document.querySelector('.main-layout');
+            const isOpen = layout.classList.contains('settings-open');
+            
+            // Close stats if open to prevent overlap/clutter ONLY ON MOBILE
+            if (window.innerWidth < 901 && document.getElementById('stats-sidebar').classList.contains('anim-active')) {
+                toggleStats();
+            }
+
+            setSettingsSidebarState(!isOpen);
+        }
+
+        function setSettingsSidebarState(isOpen) {
+            const layout = document.querySelector('.main-layout');
+            const sidebar = document.getElementById('settings-sidebar');
+            const settingsBtn = document.getElementById('settings-btn');
+            
+            if (isOpen) {
+                layout.classList.add('settings-open');
+                settingsBtn.classList.add('active');
+                
+                sidebar.classList.add('anim-enter');
+                void sidebar.offsetWidth;
+                sidebar.classList.add('anim-active');
+            } else {
+                layout.classList.remove('settings-open');
+                settingsBtn.classList.remove('active');
+                sidebar.classList.remove('anim-active');
+                
+                const transitionEndHandler = () => {
+                    if (!sidebar.classList.contains('anim-active')) {
+                        sidebar.classList.remove('anim-enter');
+                    }
+                    sidebar.removeEventListener('transitionend', transitionEndHandler);
+                };
+                sidebar.addEventListener('transitionend', transitionEndHandler);
+            }
+        }
+
+        function resetProgress() {
+            if (!confirm('Czy na pewno chcesz zresetować postępy dla wszystkich pytań?')) return;
+            
+            // Reset streaks
+            Object.keys(correctStreak).forEach(key => {
+                correctStreak[key] = 0;
+            });
+            
+            // Reset session stats
+            stats = { correct: 0, incorrect: 0, total: 0 };
+            
+            updateStats();
+            updateProgress();
+            
+            if (currentQuestionIndex !== -1) {
+                streakDisplay.textContent = `Seria: 0 / ${appSettings.streakTarget}`;
+                streakDisplay.style.color = 'var(--text-secondary)';
+            }
+            
+            showMessage('Postępy zostały zresetowane.', 'info');
+        }
+
+        function resetToFileSelection() {
+            questions = [];
+            originalQuestions = [];
+            currentQuestion = null;
+            currentQuestionIndex = -1;
+            correctStreak = {};
+            initialQuestionsCount = 0;
+            stats = { correct: 0, incorrect: 0, total: 0 };
+            verified = false;
+            
+            questionContainer.classList.add('hidden');
+            progressContainer.classList.add('hidden');
+            dropZone.style.display = 'flex';
+            
+            // Re-create the drop zone content
+            dropZone.innerHTML = `
+                <p>Przeciągnij plik/pliki lub folder tutaj<br>lub <strong>kliknij, aby wybrać</strong></p>
+                <div class="file-input-options">
+                    <button type="button" class="btn-file-select" onclick="document.getElementById('file-input').click()">Wybierz pliki</button>
+                    <button type="button" class="btn-file-select" onclick="document.getElementById('folder-input').click()">Wybierz folder</button>
+                </div>
+            `;
+            
+            const layout = document.querySelector('.main-layout');
+            layout.classList.remove('game-active');
+            setSidebarState(false);
+            setSettingsSidebarState(false);
+        }
+
+        // Handle resize to ensure mutual exclusivity on mobile
+        window.addEventListener('resize', () => {
+            if (window.innerWidth < 901) {
+                const layout = document.querySelector('.main-layout');
+                if (layout.classList.contains('stats-open') && layout.classList.contains('settings-open')) {
+                    setSettingsSidebarState(false);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
