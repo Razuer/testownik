@@ -1030,7 +1030,8 @@
         }
 
         function getQuestionId(q) {
-            let str = q.question + JSON.stringify(q.answears);
+            if (!q) return 'unknown';
+            let str = (q.question || '') + JSON.stringify(q.answears || {});
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 const char = str.charCodeAt(i);
@@ -1265,7 +1266,20 @@
                     const content = await readFileAsText(file);
                     const data = JSON.parse(content);
                     if (Array.isArray(data)) {
-                        allQuestions.push(...data);
+                        const validQuestions = data.filter(q => {
+                            // Normalize "answers" typo if present
+                            if (q.answers && !q.answears) {
+                                q.answears = q.answers;
+                            }
+                            
+                            // Basic validation
+                            if (!q.question || !q.answears || typeof q.answears !== 'object' || !q.correct) {
+                                console.warn('Pominięto nieprawidłowe pytanie w pliku:', file.name, q);
+                                return false;
+                            }
+                            return true;
+                        });
+                        allQuestions.push(...validQuestions);
                     }
                 } catch (error) {
                     console.error('Error loading JSON file:', file.name, error);
@@ -1476,83 +1490,98 @@
         }
 
         function renderQuestion(q, userSelections = null, isVerified = false) {
-            const qId = getQuestionId(q);
-            const currentStreak = correctStreak[qId] || 0;
-            streakDisplay.textContent = `Seria: ${currentStreak} / ${appSettings.streakTarget}`;
-            streakDisplay.style.color = currentStreak > 0 ? 'var(--success-color)' : 'var(--text-secondary)';
-
-            questionText.textContent = q.question;
-            
-            const answersArray = Object.entries(q.answears).map(([key, value]) => ({
-                id: parseInt(key),
-                text: value
-            }));
-            
-            // Randomize answers only for new questions
-            if (!userSelections) {
-                answersArray.sort(() => Math.random() - 0.5);
-                // Save randomized order to history item
-                questionHistory[historyIndex].randomizedAnswers = answersArray;
-            } else {
-                // Use stored order from history
-                const storedOrder = questionHistory[historyIndex].randomizedAnswers;
-                answersArray.sort((a, b) => {
-                    const idxA = storedOrder.findIndex(item => item.id === a.id);
-                    const idxB = storedOrder.findIndex(item => item.id === b.id);
-                    return idxA - idxB;
-                });
-            }
-            
-            answersContainer.innerHTML = '';
-            answersArray.forEach((answer, index) => {
-                const answerDiv = document.createElement('div');
-                answerDiv.className = 'answer';
-                const isSelected = userSelections && userSelections.includes(answer.id);
+            try {
+                if (!q) throw new Error('Brak danych pytania');
                 
-                answerDiv.innerHTML = `
-                    <div class="checkbox-custom"></div>
-                    <input type="checkbox" id="answer-${answer.id}" data-id="${answer.id}" ${isSelected ? 'checked' : ''}>
-                    <span class="answer-text">${answer.text}</span>
-                    <span class="key-hint">${index + 1}</span>
-                `;
+                const qId = getQuestionId(q);
+                const currentStreak = correctStreak[qId] || 0;
+                streakDisplay.textContent = `Seria: ${currentStreak} / ${appSettings.streakTarget}`;
+                streakDisplay.style.color = currentStreak > 0 ? 'var(--success-color)' : 'var(--text-secondary)';
 
-                if (isSelected) answerDiv.classList.add('selected');
-
-                if (isVerified) {
-                    const correctAnswers = q.correct;
-                    if (correctAnswers.includes(answer.id)) {
-                        answerDiv.classList.add('correct');
-                    } else if (isSelected) {
-                        answerDiv.classList.add('incorrect');
-                    }
-                    answerDiv.querySelector('input').disabled = true;
-                    answerDiv.querySelector('.key-hint').style.display = 'none';
+                questionText.textContent = q.question || 'Błąd: Brak treści pytania';
+                
+                if (!q.answears || typeof q.answears !== 'object') {
+                    throw new Error('Nieprawidłowy format odpowiedzi');
                 }
 
-                answerDiv.addEventListener('click', function(e) {
-                    if (verified || isBrowsingHistory) return;
-                    const checkbox = this.querySelector('input[type="checkbox"]');
-                    checkbox.checked = !checkbox.checked;
-                    updateAnswerStyle(answerDiv);
+                const answersArray = Object.entries(q.answears).map(([key, value]) => ({
+                    id: parseInt(key),
+                    text: value
+                }));
+                
+                // Randomize answers only for new questions
+                if (!userSelections) {
+                    answersArray.sort(() => Math.random() - 0.5);
+                    // Save randomized order to history item
+                    questionHistory[historyIndex].randomizedAnswers = answersArray;
+                } else {
+                    // Use stored order from history
+                    const storedOrder = questionHistory[historyIndex].randomizedAnswers;
+                    if (storedOrder) {
+                        answersArray.sort((a, b) => {
+                            const idxA = storedOrder.findIndex(item => item.id === a.id);
+                            const idxB = storedOrder.findIndex(item => item.id === b.id);
+                            return idxA - idxB;
+                        });
+                    }
+                }
+                
+                answersContainer.innerHTML = '';
+                answersArray.forEach((answer, index) => {
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'answer';
+                    const isSelected = userSelections && userSelections.includes(answer.id);
+                    
+                    answerDiv.innerHTML = `
+                        <div class="checkbox-custom"></div>
+                        <input type="checkbox" id="answer-${answer.id}" data-id="${answer.id}" ${isSelected ? 'checked' : ''}>
+                        <span class="answer-text">${answer.text}</span>
+                        <span class="key-hint">${index + 1}</span>
+                    `;
+
+                    if (isSelected) answerDiv.classList.add('selected');
+
+                    if (isVerified) {
+                        const correctAnswers = q.correct || [];
+                        if (correctAnswers.includes(answer.id)) {
+                            answerDiv.classList.add('correct');
+                        } else if (isSelected) {
+                            answerDiv.classList.add('incorrect');
+                        }
+                        answerDiv.querySelector('input').disabled = true;
+                        answerDiv.querySelector('.key-hint').style.display = 'none';
+                    }
+
+                    answerDiv.addEventListener('click', function(e) {
+                        if (verified || isBrowsingHistory) return;
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        updateAnswerStyle(answerDiv);
+                    });
+                    answersContainer.appendChild(answerDiv);
                 });
-                answersContainer.appendChild(answerDiv);
-            });
 
-            if (isVerified) {
-                verifyBtn.classList.add('hidden');
-                nextBtn.classList.remove('hidden');
-            } else {
-                verifyBtn.classList.remove('hidden');
-                verifyBtn.disabled = false;
-                nextBtn.classList.add('hidden');
-            }
+                if (isVerified) {
+                    verifyBtn.classList.add('hidden');
+                    nextBtn.classList.remove('hidden');
+                } else {
+                    verifyBtn.classList.remove('hidden');
+                    verifyBtn.disabled = false;
+                    nextBtn.classList.add('hidden');
+                }
 
-            questionContainer.classList.remove('hidden');
-            updateProgress();
-            updateStats();
-            
-            if(window.innerWidth < 900) {
-                questionContainer.scrollIntoView({behavior: 'smooth'});
+                questionContainer.classList.remove('hidden');
+                updateProgress();
+                updateStats();
+                
+                if(window.innerWidth < 900) {
+                    questionContainer.scrollIntoView({behavior: 'smooth'});
+                }
+            } catch (error) {
+                console.error('Error in renderQuestion:', error, q);
+                showMessage('Wystąpił błąd podczas wyświetlania pytania. Pomijanie...', 'error');
+                // Auto-skip after a short delay
+                setTimeout(loadNextQuestion, 2000);
             }
         }
 
@@ -1578,9 +1607,11 @@
                 }
             });
 
-            const correctAnswers = currentQuestion.correct;
+            const correctAnswers = currentQuestion.correct || [];
             selectedAnswers.sort((a, b) => a - b);
-            correctAnswers.sort((a, b) => a - b);
+            if (Array.isArray(correctAnswers)) {
+                correctAnswers.sort((a, b) => a - b);
+            }
 
             // Update history with user selections and verified state
             questionHistory[historyIndex].userSelections = selectedAnswers;
