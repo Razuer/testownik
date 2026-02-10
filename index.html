@@ -996,6 +996,7 @@
             total: 0
         };
         let verified = false;
+        let sessionHash = '';
 
         // Randomization Pool
         let drawPool = [];
@@ -1026,6 +1027,27 @@
 
         function saveSettings() {
             localStorage.setItem('testownik-settings', JSON.stringify(appSettings));
+        }
+
+        function getQuestionId(q) {
+            let str = q.question + JSON.stringify(q.answears);
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0;
+            }
+            return 'q' + Math.abs(hash).toString(16);
+        }
+
+        function saveProgress() {
+            if (!sessionHash) return;
+            const data = {
+                streaks: correctStreak,
+                stats: stats,
+                initialCount: initialQuestionsCount
+            };
+            localStorage.setItem('testownik-progress-' + sessionHash, JSON.stringify(data));
         }
 
         // Elements
@@ -1268,6 +1290,15 @@
                 return;
             }
             
+            // Generate session hash
+            const allIds = allQuestions.map(q => getQuestionId(q)).sort().join('|');
+            let hash = 0;
+            for (let i = 0; i < allIds.length; i++) {
+                hash = ((hash << 5) - hash) + allIds.charCodeAt(i);
+                hash |= 0;
+            }
+            sessionHash = Math.abs(hash).toString(16);
+            
             questions = allQuestions;
             // Deep copy for restart
             originalQuestions = JSON.parse(JSON.stringify(questions));
@@ -1324,14 +1355,39 @@
             questionHistory = [];
             historyIndex = -1;
             isBrowsingHistory = false;
-            drawPool = []; // Reset draw pool
-            questions.forEach((q, idx) => {
-                correctStreak[idx] = 0;
-            });
-            // Reset stats
-            stats = { correct: 0, incorrect: 0, total: 0 };
+            drawPool = [];
+
+            // Try to load progress
+            const savedData = localStorage.getItem('testownik-progress-' + sessionHash);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    correctStreak = parsed.streaks || {};
+                    stats = parsed.stats || { correct: 0, incorrect: 0, total: 0 };
+                    initialQuestionsCount = parsed.initialCount || questions.length;
+                    
+                    // Filter out already eliminated questions
+                    questions = questions.filter(q => {
+                        const id = getQuestionId(q);
+                        const streak = correctStreak[id] || 0;
+                        return streak < appSettings.streakTarget;
+                    });
+                    
+                    if (initialQuestionsCount - questions.length > 0) {
+                        showMessage('Przywrócono postęp sesji.', 'info');
+                    }
+                } catch(e) { 
+                    console.error('Progress load error', e); 
+                    stats = { correct: 0, incorrect: 0, total: 0 };
+                }
+            } else {
+                stats = { correct: 0, incorrect: 0, total: 0 };
+                // Initialize streaks for new session
+                questions.forEach(q => {
+                    correctStreak[getQuestionId(q)] = 0;
+                });
+            }
             
-            showMessage('Baza danych zaktualizowana.', 'success');
             updateProgress();
             updateStats();
             loadNextQuestion();
@@ -1398,6 +1454,9 @@
         }
 
         function restartSession() {
+            if (sessionHash) {
+                localStorage.removeItem('testownik-progress-' + sessionHash);
+            }
             // Reset questions from original copy
             questions = JSON.parse(JSON.stringify(originalQuestions));
             startSession();
@@ -1416,51 +1475,9 @@
             }, 3000);
         }
 
-        function loadNextQuestion() {
-            // Reset history browsing if we are moving forward to a new question
-            isBrowsingHistory = false;
-
-            // Remove elimination animation if present
-            document.querySelector('.question-card').classList.remove('question-eliminated');
-
-            if (questions.length === 0) {
-                showMessage('Misja zakończona sukcesem! Wszystkie pytania zaliczone.', 'success');
-                questionContainer.classList.add('hidden');
-                dropZone.style.display = 'flex'; // Use flex to center content
-                
-                // Add Restart Button
-                dropZone.innerHTML = `
-                    <p><strong>Gratulacje!</strong><br>Wszystkie pytania zaliczone.</p>
-                    <button class="btn-restart" onclick="restartSession()">Zrestartuj te same pytania</button>
-                    <div class="file-input-options" style="margin-top:1rem;">
-                        <button type="button" class="btn-file-select" onclick="document.getElementById('file-input').click()">Wybierz pliki</button>
-                        <button type="button" class="btn-file-select" onclick="document.getElementById('folder-input').click()">Wybierz folder</button>
-                    </div>
-                `;
-                
-                const layout = document.querySelector('.main-layout');
-                layout.classList.remove('game-active');
-                setSidebarState(false);
-                return;
-            }
-
-            currentQuestionIndex = Math.floor(Math.random() * questions.length);
-            currentQuestion = questions[currentQuestionIndex];
-            verified = false;
-
-            // Save to history
-            questionHistory.push({
-                question: JSON.parse(JSON.stringify(currentQuestion)),
-                indexInPool: currentQuestionIndex,
-                userSelections: []
-            });
-            historyIndex = questionHistory.length - 1;
-
-            renderQuestion(currentQuestion);
-        }
-
         function renderQuestion(q, userSelections = null, isVerified = false) {
-            const currentStreak = correctStreak[currentQuestionIndex] || 0;
+            const qId = getQuestionId(q);
+            const currentStreak = correctStreak[qId] || 0;
             streakDisplay.textContent = `Seria: ${currentStreak} / ${appSettings.streakTarget}`;
             streakDisplay.style.color = currentStreak > 0 ? 'var(--success-color)' : 'var(--text-secondary)';
 
@@ -1569,6 +1586,7 @@
             questionHistory[historyIndex].userSelections = selectedAnswers;
             questionHistory[historyIndex].isVerified = true;
 
+            const qId = getQuestionId(currentQuestion);
             const isCorrect = JSON.stringify(selectedAnswers) === JSON.stringify(correctAnswers);
 
             checkboxes.forEach(cb => {
@@ -1590,12 +1608,12 @@
             let isEliminated = false;
 
             if (isCorrect) {
-                correctStreak[currentQuestionIndex]++;
+                correctStreak[qId]++;
                 stats.correct++;
                 stats.total++;
                 showMessage('Odpowiedź poprawna.', 'success');
                 
-                if (correctStreak[currentQuestionIndex] >= appSettings.streakTarget) {
+                if (correctStreak[qId] >= appSettings.streakTarget) {
                     isEliminated = true;
                     // Add visual animation for elimination
                     document.querySelector('.question-card').classList.add('question-eliminated');
@@ -1606,32 +1624,23 @@
                     drawPool = drawPool.filter(idx => idx !== currentQuestionIndex)
                                      .map(idx => idx > currentQuestionIndex ? idx - 1 : idx);
 
-                    const newCorrectStreak = {};
-                    // Re-index logic preserved
-                    Object.keys(correctStreak).forEach(key => {
-                        const idx = parseInt(key);
-                        if (idx < currentQuestionIndex) {
-                            newCorrectStreak[idx] = correctStreak[idx];
-                        } else if (idx > currentQuestionIndex) {
-                            newCorrectStreak[idx - 1] = correctStreak[idx];
-                        }
-                    });
-                    correctStreak = newCorrectStreak;
                     showMessage('Pytanie wyeliminowane z puli.', 'success');
                 }
             } else {
-                correctStreak[currentQuestionIndex] = 0;
+                correctStreak[qId] = 0;
                 stats.incorrect++;
                 stats.total++;
                 showMessage('Niepoprawna odpowiedź.', 'error');
             }
+
+            saveProgress();
 
             // Streak Update
             if (isEliminated) {
                  streakDisplay.textContent = `Seria: ${appSettings.streakTarget} / ${appSettings.streakTarget}`;
                  streakDisplay.style.color = '#000'; // Black color for better contrast
             } else {
-                const newStreak = correctStreak[currentQuestionIndex] || 0;
+                const newStreak = correctStreak[qId] || 0;
                 streakDisplay.textContent = `Seria: ${newStreak} / ${appSettings.streakTarget}`;
                 streakDisplay.style.color = newStreak > 0 ? 'var(--success-color)' : 'var(--text-secondary)';
             }
@@ -1777,6 +1786,7 @@
             
             // Reset session stats
             stats = { correct: 0, incorrect: 0, total: 0 };
+            saveProgress();
             
             updateStats();
             updateProgress();
