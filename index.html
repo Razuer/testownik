@@ -2066,6 +2066,11 @@
                     if (appSettings.shuffleQuestions) {
                         drawPool = shuffleArray(drawPool);
                     }
+                    // For sequential order, reverse so we can use pop() (which is more efficient)
+                    // This makes pop() return 0, 1, 2, 3... in order
+                    else {
+                        drawPool.reverse();
+                    }
                 }
 
                 currentQuestionIndex = drawPool.pop();
@@ -2311,6 +2316,10 @@
                             );
 
                         showMessage("Pytanie wyeliminowane z puli.", "success");
+                    } else if (!appSettings.shuffleQuestions) {
+                        // In sequential mode, move correctly answered (but not eliminated) 
+                        // questions to the end of the queue
+                        drawPool.unshift(currentQuestionIndex);
                     }
                 } else {
                     correctStreak[qId] = 0;
@@ -2513,10 +2522,17 @@
                 )
                     return;
 
+                // Restore all questions from original copy
+                questions = JSON.parse(JSON.stringify(originalQuestions));
+                initialQuestionsCount = questions.length;
+
                 // Reset streaks
                 Object.keys(correctStreak).forEach((key) => {
                     correctStreak[key] = 0;
                 });
+
+                // Reset drawPool so questions will be reordered properly
+                drawPool = [];
 
                 // Reset session stats
                 stats = { correct: 0, incorrect: 0, total: 0 };
@@ -2530,7 +2546,7 @@
                     streakDisplay.style.color = "var(--text-secondary)";
                 }
 
-                showMessage("Postępy zostały zresetowane.", "info");
+                showMessage("Postępy i wszystkie pytania zostały przywrócone.", "info");
             }
 
             function resetToFileSelection() {
