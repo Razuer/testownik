@@ -150,7 +150,7 @@
                 grid-template-columns: 1fr;
                 gap: 2rem;
                 align-items: start;
-                max-width: 800px;
+                max-width: 1024px; /* Increased from 800px */
                 margin: 0 auto;
                 width: 100%;
                 transition: max-width 0.3s ease;
@@ -160,8 +160,8 @@
             /* Game Active State - Kept simple to avoid layout shift */
             @media (min-width: 901px) {
                 .main-layout.game-active {
-                    /* No layout changes - keep it centered and 800px */
-                    max-width: 800px;
+                    /* Keep it centered and consistent */
+                    max-width: 1024px;
                 }
 
                 .main-layout.game-active .content-area {
@@ -471,10 +471,12 @@
                 gap: 1rem;
                 margin-top: 2rem;
                 justify-content: flex-end;
+                width: 100%;
+                flex-wrap: wrap; /* Allow wrapping if really needed */
             }
 
             button {
-                padding: 14px 32px;
+                padding: 14px 24px; /* Reduced padding slightly */
                 font-size: 1rem;
                 font-weight: 600;
                 border: none;
@@ -484,10 +486,11 @@
                 font-family: var(--font-family);
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
-                min-width: 150px; /* Prevent layout jumps */
+                min-width: 140px; /* Reduced min-width slightly */
                 display: inline-flex;
                 justify-content: center;
                 align-items: center;
+                flex: 1 0 auto; /* Allow buttons to grow and shrink properly */
             }
 
             button:disabled {
@@ -735,6 +738,142 @@
                     transform: translateY(0);
                 }
             }
+            /* Question Wrapper */
+            .question-wrapper {
+                position: relative;
+                width: 100%;
+                min-height: 300px;
+            }
+
+            .question-content {
+                width: 100%;
+                transition: opacity 0.3s ease;
+            }
+
+            .question-wrapper.search-active .question-content {
+                opacity: 0.3;
+                pointer-events: none;
+            }
+
+            /* Search Overlay Panel - slides up from bottom (like Stats/Settings) */
+            .search-overlay {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: 0;
+                background: var(--surface-color);
+                border-radius: var(--border-radius);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+                z-index: 10;
+                
+                /* Animation base state - hidden and not affecting layout */
+                display: none;
+                opacity: 0;
+                transform: translateY(20px);
+                transition: opacity 0.3s ease, transform 0.3s ease;
+                pointer-events: none;
+            }
+
+            /* When visible for animation */
+            .search-overlay.anim-enter {
+                display: block;
+            }
+
+            /* Active state - fully visible */
+            .search-overlay.anim-active {
+                opacity: 1;
+                transform: translateY(0);
+                pointer-events: auto;
+            }
+
+            /* Search Section inside overlay */
+            .search-section {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                padding: 1.5rem;
+            }
+
+            .search-section h2 {
+                text-align: center;
+                color: var(--text-primary);
+                font-size: 1.2rem;
+                margin-bottom: 1rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                padding-bottom: 0.5rem;
+            }
+
+            .search-container {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            #search-input {
+                width: 100%;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: var(--text-primary);
+                padding: 12px;
+                border-radius: 8px;
+                font-family: var(--font-family);
+                font-size: 1rem;
+            }
+
+            #search-input:focus {
+                border-color: var(--primary-color);
+                background: rgba(255, 255, 255, 0.08);
+            }
+
+            .search-results {
+                flex: 1;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                padding-right: 5px;
+                min-height: 0;
+            }
+            
+            /* Custom Scrollbar */
+            .search-results::-webkit-scrollbar {
+                width: 6px;
+            }
+            .search-results::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.02);
+            }
+            .search-results::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 3px;
+            }
+            .search-results::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            .search-result-item {
+                padding: 10px;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.2s;
+                font-size: 0.95rem; /* Slightly larger */
+                color: var(--text-secondary);
+                /* Removed line clamping to show full text */
+                line-height: 1.4;
+            }
+
+            .search-result-item:hover {
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--text-primary);
+                border-color: var(--primary-color);
+            }
+
             /* Settings Sidebar */
             .settings-sidebar {
                 background: var(--surface-color);
@@ -897,6 +1036,44 @@
                 transform: translateY(-2px);
             }
 
+            /* Loading Spinner */
+            .loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 4000;
+                backdrop-filter: blur(5px);
+                transition: opacity 0.3s;
+            }
+
+            .loading-overlay.hidden {
+                opacity: 0;
+                pointer-events: none;
+                display: none !important; 
+            }
+
+            .spinner {
+                width: 50px;
+                height: 50px;
+                border: 4px solid rgba(255, 255, 255, 0.1);
+                border-top: 4px solid var(--primary-color);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 1rem;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
             /* Mobile Settings */
             @media (max-width: 900px) {
                 .settings-sidebar {
@@ -937,6 +1114,11 @@
         </style>
     </head>
     <body>
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="spinner"></div>
+            <p>Wczytywanie...</p>
+        </div>
+
         <div id="message" class="message"></div>
 
         <div class="container">
@@ -988,6 +1170,23 @@
                         <p class="setting-hint">
                             Automatycznie przejdź do kolejnego pytania po
                             sukcesie.
+                        </p>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="switch-row">
+                            <label class="setting-label" for="setting-shuffle"
+                                >Losowa kolejność pytań</label
+                            >
+                            <label class="switch">
+                                <input type="checkbox" id="setting-shuffle" checked />
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <p class="setting-hint">
+                            Gdy włączone, pytania pojawiają się w losowej
+                            kolejności. Gdy wyłączone, zachowana jest kolejność
+                            z pliku.
                         </p>
                     </div>
 
@@ -1082,18 +1281,32 @@
                     <div
                         id="question-container"
                         class="hidden"
-                        style="animation: fadeIn 0.4s ease-out"
                     >
-                        <div class="question-card">
-                            <div class="question-header">
-                                <div class="streak-badge" id="streak-display">
-                                    Streak: 0
+                        <div class="question-wrapper" id="question-wrapper">
+                            <!-- Question Content -->
+                            <div class="question-content" id="question-content">
+                                <div class="question-card">
+                                    <div class="question-header">
+                                        <div class="streak-badge" id="streak-display">
+                                            Streak: 0
+                                        </div>
+                                    </div>
+                                    <div class="question-text" id="question-text"></div>
+                                </div>
+                                <div class="answers" id="answers"></div>
+                            </div>
+                            
+                            <!-- Search Overlay Panel -->
+                            <div class="search-overlay" id="search-overlay">
+                                <div class="search-section">
+                                    <h2>Szukaj Pytania</h2>
+                                    <div class="search-container">
+                                        <input type="text" id="search-input" placeholder="Wpisz frazę..." />
+                                        <div id="search-results" class="search-results"></div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="question-text" id="question-text"></div>
                         </div>
-
-                        <div class="answers" id="answers"></div>
 
                         <div class="buttons">
                             <button
@@ -1102,6 +1315,13 @@
                                 title="Wczytaj nowe pytania"
                             >
                                 Nowe pytania
+                            </button>
+                            <button
+                                class="btn-stats"
+                                id="search-btn"
+                                title="Szukaj (Skrót: F)"
+                            >
+                                Szukaj
                             </button>
                             <button
                                 class="btn-stats"
@@ -1212,6 +1432,7 @@
             let appSettings = {
                 streakTarget: 2,
                 autoNext: false,
+                shuffleQuestions: true,
             };
 
             function loadSettings() {
@@ -1229,6 +1450,8 @@
                     appSettings.streakTarget;
                 document.getElementById("setting-auto-next").checked =
                     appSettings.autoNext;
+                document.getElementById("setting-shuffle").checked =
+                    appSettings.shuffleQuestions;
             }
 
             function saveSettings() {
@@ -1382,14 +1605,74 @@
                 });
 
             document
+                .getElementById("setting-shuffle")
+                .addEventListener("change", (e) => {
+                    appSettings.shuffleQuestions = e.target.checked;
+                    saveSettings();
+                    // Reset drawPool so the new order takes effect immediately
+                    drawPool = [];
+                    
+                    // Jump to first question in file order
+                    if (questions.length > 0) {
+                        currentQuestionIndex = 0;
+                        currentQuestion = questions[0];
+                        verified = false;
+                        
+                        // Reset history
+                        questionHistory = [];
+                        historyIndex = -1;
+                        isBrowsingHistory = false;
+                        
+                        // Save to history
+                        questionHistory.push({
+                            question: JSON.parse(JSON.stringify(currentQuestion)),
+                            indexInPool: currentQuestionIndex,
+                            userSelections: [],
+                        });
+                        historyIndex = 0;
+                        
+                        renderQuestion(currentQuestion);
+                    }
+                    
+                    showMessage(
+                        appSettings.shuffleQuestions
+                            ? "Losowa kolejność włączona"
+                            : "Kolejność z pliku przywrócona - pytanie 1",
+                        "info",
+                    );
+                });
+
+            document
                 .getElementById("btn-reset-progress")
                 .addEventListener("click", resetProgress);
 
             // Init Settings
             loadSettings();
 
+            // Search Elements
+            const searchBtn = document.getElementById("search-btn");
+            const searchInput = document.getElementById("search-input");
+            const searchResults = document.getElementById("search-results");
+            const searchOverlay = document.getElementById("search-overlay");
+            const questionWrapper = document.getElementById("question-wrapper");
+            
+            // Track if we're viewing a searched question
+            let isViewingSearchedQuestion = false;
+
+            searchBtn.addEventListener("click", toggleSearch);
+            searchInput.addEventListener("input", handleSearch);
+
             // Keyboard Shortcuts
             document.addEventListener("keydown", (e) => {
+                // Allow typing in search input
+                if (document.activeElement === searchInput) {
+                    if (e.key === "Escape") {
+                        toggleSearch();
+                        searchBtn.focus();
+                    }
+                    return;
+                }
+
                 if (questionContainer.classList.contains("hidden")) return;
 
                 // Numbers 1-9 for selecting answers
@@ -1418,6 +1701,12 @@
                 // S for Stats
                 if (e.key.toLowerCase() === "s") {
                     toggleStats();
+                }
+
+                // F for Search
+                if (e.key.toLowerCase() === "f") {
+                    e.preventDefault();
+                    toggleSearch();
                 }
 
                 // C for Copy
@@ -1517,6 +1806,11 @@
             }
 
             async function loadMultipleFiles(files) {
+                const loadingOverlay = document.getElementById("loading-overlay");
+                loadingOverlay.classList.remove("hidden");
+                // Allow UI to update
+                await new Promise(resolve => setTimeout(resolve, 50));
+
                 const jsonFiles = [];
                 const txtFiles = [];
 
@@ -1589,6 +1883,7 @@
                 }
 
                 if (allQuestions.length === 0) {
+                    loadingOverlay.classList.add("hidden");
                     showMessage(
                         "Błąd krytyczny: Nie znaleziono prawidłowych pytań w wybranych plikach.",
                         "error",
@@ -1612,6 +1907,7 @@
                 // Deep copy for restart
                 originalQuestions = JSON.parse(JSON.stringify(questions));
                 startSession();
+                loadingOverlay.classList.add("hidden");
             }
 
             function readFileAsText(file) {
@@ -1729,6 +2025,12 @@
                 // Reset history browsing if we are moving forward to a new question
                 isBrowsingHistory = false;
 
+                // If we were viewing a searched question, reset the flag and button text
+                if (isViewingSearchedQuestion) {
+                    isViewingSearchedQuestion = false;
+                    nextBtn.textContent = "Następne";
+                }
+
                 // Remove elimination animation if present
                 document
                     .querySelector(".question-card")
@@ -1760,9 +2062,10 @@
 
                 // Fill drawPool if empty
                 if (drawPool.length === 0) {
-                    drawPool = shuffleArray([
-                        ...Array(questions.length).keys(),
-                    ]);
+                    drawPool = [...Array(questions.length).keys()];
+                    if (appSettings.shuffleQuestions) {
+                        drawPool = shuffleArray(drawPool);
+                    }
                 }
 
                 currentQuestionIndex = drawPool.pop();
@@ -2100,6 +2403,11 @@
                     toggleSettings();
                 }
 
+                // Close search if open
+                if (layout.classList.contains("search-open")) {
+                    setSearchOverlayState(false);
+                }
+
                 setSidebarState(!isOpen);
             }
 
@@ -2154,6 +2462,11 @@
                         .classList.contains("anim-active")
                 ) {
                     toggleStats();
+                }
+
+                // Close search if open
+                if (layout.classList.contains("search-open")) {
+                    setSearchOverlayState(false);
                 }
 
                 setSettingsSidebarState(!isOpen);
@@ -2247,6 +2560,7 @@
                 layout.classList.remove("game-active");
                 setSidebarState(false);
                 setSettingsSidebarState(false);
+                setSearchOverlayState(false);
             }
 
             // Handle resize to ensure mutual exclusivity on mobile
@@ -2261,6 +2575,126 @@
                     }
                 }
             });
+            function toggleSearch() {
+                const layout = document.querySelector(".main-layout");
+                const isOpen = layout.classList.contains("search-open");
+                
+                setSearchOverlayState(!isOpen);
+            }
+
+            function setSearchOverlayState(isOpen) {
+                const layout = document.querySelector(".main-layout");
+
+                if (isOpen) {
+                    layout.classList.add("search-open");
+                    questionWrapper.classList.add("search-active");
+                    searchBtn.classList.add("active");
+
+                    // Add display first, then animate
+                    searchOverlay.classList.add("anim-enter");
+                    void searchOverlay.offsetWidth; // Force reflow
+                    searchOverlay.classList.add("anim-active");
+                    
+                    // Focus search input after animation starts
+                    setTimeout(() => {
+                        searchInput.focus();
+                        handleSearch({ target: searchInput });
+                    }, 150);
+                } else {
+                    layout.classList.remove("search-open");
+                    questionWrapper.classList.remove("search-active");
+                    searchBtn.classList.remove("active");
+                    
+                    // Animate out first, then remove display
+                    searchOverlay.classList.remove("anim-active");
+
+                    const transitionEndHandler = () => {
+                        if (!searchOverlay.classList.contains("anim-active")) {
+                            searchOverlay.classList.remove("anim-enter");
+                        }
+                        searchOverlay.removeEventListener(
+                            "transitionend",
+                            transitionEndHandler,
+                        );
+                    };
+                    searchOverlay.addEventListener(
+                        "transitionend",
+                        transitionEndHandler,
+                    );
+                }
+            }
+
+            function handleSearch(e) {
+                const query = e.target.value.toLowerCase().trim();
+                searchResults.innerHTML = "";
+
+                if (!query) {
+                    // Maybe show something else?
+                }
+
+                const source =
+                    originalQuestions.length > 0
+                        ? originalQuestions
+                        : questions;
+
+                const matches = source
+                    .filter((q) => {
+                        return q.question.toLowerCase().includes(query);
+                    })
+                    .slice(0, 50);
+
+                matches.forEach((q) => {
+                    const div = document.createElement("div");
+                    div.className = "search-result-item";
+                    div.textContent = q.question;
+                    div.addEventListener("click", () => openQuestion(q));
+                    searchResults.appendChild(div);
+                });
+
+                if (matches.length === 0 && query) {
+                    const div = document.createElement("div");
+                    div.className = "search-result-item";
+                    div.style.cursor = "default";
+                    div.textContent = "Brak wyników";
+                    searchResults.appendChild(div);
+                }
+            }
+
+            function openQuestion(q) {
+                // 1. Close search overlay using proper animation
+                setSearchOverlayState(false);
+
+                // 2. Set flag that we're viewing a searched question
+                isViewingSearchedQuestion = true;
+
+                // 3. Set as current question
+                currentQuestion = q;
+
+                // Check if it's in the current `questions` array.
+                const idx = questions.findIndex(
+                    (item) => getQuestionId(item) === getQuestionId(q),
+                );
+
+                if (idx !== -1) {
+                    currentQuestionIndex = idx;
+                } else {
+                    currentQuestionIndex = -1;
+                }
+
+                // 4. Render verified with correct answers selected
+                const correctIds = currentQuestion.correct || [];
+                renderQuestion(currentQuestion, correctIds, true);
+
+                verified = true;
+
+                // 5. Update buttons - change next button text to indicate return to test
+                verifyBtn.classList.add("hidden");
+                nextBtn.classList.remove("hidden");
+                nextBtn.textContent = "Powrót do testu"; // Changed text
+                nextBtn.focus();
+
+                showMessage("Otwarto pytanie z wyszukiwarki", "info");
+            }
         </script>
     </body>
 </html>
