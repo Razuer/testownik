@@ -25,6 +25,14 @@
                 --border-radius: 16px;
                 --transition-speed: 0.2s;
                 --font-family: "Inter", system-ui, -apple-system, sans-serif;
+                
+                /* Fluid font sizing */
+                --font-size-base: clamp(14px, 0.9vw + 10px, 18px);
+                --font-size-h1: clamp(2rem, 4vw + 1rem, 3.5rem);
+                --font-size-h2: clamp(1.2rem, 2vw + 0.5rem, 1.5rem);
+                --font-size-body: clamp(0.95rem, 1.2vw + 0.5rem, 1.1rem);
+                --font-size-small: clamp(0.75rem, 0.8vw + 0.4rem, 0.9rem);
+                --font-size-button: clamp(0.85rem, 1vw + 0.4rem, 1rem);
             }
 
             * {
@@ -36,6 +44,7 @@
 
             body {
                 font-family: var(--font-family);
+                font-size: var(--font-size-base);
                 background-color: var(--bg-color);
                 color: var(--text-primary);
                 min-height: 100vh;
@@ -47,8 +56,8 @@
 
             .container {
                 width: 100%;
-                max-width: 1200px;
-                padding: 20px;
+                max-width: min(1200px, 95vw); /* Responsive max-width */
+                padding: clamp(10px, 2vw, 20px); /* Responsive padding */
                 position: relative;
                 flex: 1;
                 display: flex;
@@ -130,7 +139,7 @@
             h1 {
                 text-align: center;
                 font-weight: 800;
-                font-size: 3rem;
+                font-size: var(--font-size-h1);
                 margin-bottom: 2rem;
                 background: linear-gradient(
                     135deg,
@@ -148,9 +157,9 @@
             .main-layout {
                 display: grid;
                 grid-template-columns: 1fr;
-                gap: 2rem;
+                gap: clamp(1rem, 2vw, 2rem);
                 align-items: start;
-                max-width: 1024px; /* Increased from 800px */
+                max-width: min(1024px, 90vw); /* Responsive max-width */
                 margin: 0 auto;
                 width: 100%;
                 transition: max-width 0.3s ease;
@@ -161,7 +170,7 @@
             @media (min-width: 901px) {
                 .main-layout.game-active {
                     /* Keep it centered and consistent */
-                    max-width: 1024px;
+                    max-width: min(1024px, 90vw);
                 }
 
                 .main-layout.game-active .content-area {
@@ -224,7 +233,7 @@
             .stats-sidebar h2 {
                 text-align: center;
                 color: var(--text-primary);
-                font-size: 1.2rem;
+                font-size: var(--font-size-h2);
                 margin-bottom: 0.5rem;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                 padding-bottom: 0.5rem;
@@ -262,7 +271,7 @@
 
             .drop-zone p {
                 color: var(--text-secondary);
-                font-size: 1.1rem;
+                font-size: var(--font-size-body);
                 pointer-events: none;
             }
 
@@ -279,7 +288,7 @@
 
             .btn-file-select {
                 padding: 12px 24px;
-                font-size: 0.9rem;
+                font-size: var(--font-size-button);
                 font-weight: 600;
                 border: 1px solid var(--primary-color);
                 background: transparent;
@@ -316,7 +325,7 @@
 
             .stat-label {
                 color: var(--text-secondary);
-                font-size: 0.75rem;
+                font-size: var(--font-size-small);
                 margin-bottom: 0.2rem;
                 text-transform: uppercase;
                 letter-spacing: 0.05em;
@@ -325,7 +334,7 @@
             .stat-value {
                 color: var(--primary-color);
                 font-weight: 800;
-                font-size: 1.2rem;
+                font-size: var(--font-size-h2);
             }
 
             /* Question Area */
@@ -349,7 +358,7 @@
                 background: rgba(255, 255, 255, 0.1);
                 padding: 4px 12px;
                 border-radius: 20px;
-                font-size: 0.8rem;
+                font-size: var(--font-size-small);
                 color: var(--secondary-color);
                 font-weight: 600;
                 border: 1px solid rgba(188, 19, 254, 0.3);
@@ -357,7 +366,7 @@
             }
 
             .question-text {
-                font-size: 1.4rem;
+                font-size: clamp(1.1rem, 2vw + 0.5rem, 1.5rem);
                 line-height: 1.5;
                 font-weight: 600;
                 color: var(--text-primary);
@@ -416,7 +425,7 @@
             .key-hint {
                 position: absolute;
                 right: 15px;
-                font-size: 0.8rem;
+                font-size: var(--font-size-small);
                 color: var(--primary-color);
                 background: rgba(0, 0, 0, 0.8);
                 padding: 4px 8px;
@@ -476,8 +485,8 @@
             }
 
             button {
-                padding: 14px 24px; /* Reduced padding slightly */
-                font-size: 1rem;
+                padding: clamp(10px, 1.5vw, 14px) clamp(16px, 2vw, 24px); /* Responsive padding */
+                font-size: var(--font-size-button);
                 font-weight: 600;
                 border: none;
                 border-radius: 12px;
@@ -698,13 +707,46 @@
                 }
             }
 
+            /* Large screens - reduce base size */
+            @media (min-width: 1600px) {
+                :root {
+                    --font-size-base: clamp(13px, 0.8vw, 16px);
+                }
+            }
+
+            /* Medium screens (tablets, small laptops) */
+            @media (max-width: 1200px) {
+                :root {
+                    --font-size-base: clamp(13px, 1vw + 8px, 16px);
+                }
+                .container {
+                    padding: 15px;
+                }
+                .main-layout {
+                    max-width: 900px;
+                }
+            }
+
+            /* Small screens (large phones, small tablets) */
+            @media (max-width: 1024px) {
+                :root {
+                    --font-size-base: clamp(12px, 1.2vw + 8px, 15px);
+                }
+                .main-layout {
+                    max-width: 100%;
+                }
+                .question-card {
+                    padding: 1.5rem;
+                }
+            }
+
             /* Mobile tweaks */
             @media (max-width: 900px) {
                 .container {
                     padding: 10px;
                 }
                 h1 {
-                    font-size: 2rem;
+                    font-size: clamp(1.8rem, 6vw, 2.5rem);
                 }
                 .buttons {
                     flex-direction: column-reverse;
@@ -1191,6 +1233,23 @@
                     </div>
 
                     <div class="setting-item">
+                        <div class="switch-row">
+                            <label class="setting-label" for="setting-shuffle-answers"
+                                >Losowa kolejność odpowiedzi</label
+                            >
+                            <label class="switch">
+                                <input type="checkbox" id="setting-shuffle-answers" checked />
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <p class="setting-hint">
+                            Gdy włączone, odpowiedzi w każdym pytaniu są
+                            losowo mieszane. Gdy wyłączone, zachowana jest
+                            kolejność odpowiedzi z pliku.
+                        </p>
+                    </div>
+
+                    <div class="setting-item">
                         <label class="setting-label">Skróty klawiszowe</label>
                         <div
                             class="setting-hint"
@@ -1433,6 +1492,7 @@
                 streakTarget: 2,
                 autoNext: false,
                 shuffleQuestions: true,
+                shuffleAnswers: true,
             };
 
             function loadSettings() {
@@ -1452,6 +1512,8 @@
                     appSettings.autoNext;
                 document.getElementById("setting-shuffle").checked =
                     appSettings.shuffleQuestions;
+                document.getElementById("setting-shuffle-answers").checked =
+                    appSettings.shuffleAnswers;
             }
 
             function saveSettings() {
@@ -1638,6 +1700,19 @@
                         appSettings.shuffleQuestions
                             ? "Losowa kolejność włączona"
                             : "Kolejność z pliku przywrócona - pytanie 1",
+                        "info",
+                    );
+                });
+
+            document
+                .getElementById("setting-shuffle-answers")
+                .addEventListener("change", (e) => {
+                    appSettings.shuffleAnswers = e.target.checked;
+                    saveSettings();
+                    showMessage(
+                        appSettings.shuffleAnswers
+                            ? "Losowa kolejność odpowiedzi włączona"
+                            : "Kolejność odpowiedzi z pliku przywrócona",
                         "info",
                     );
                 });
@@ -2142,14 +2217,19 @@
                         }),
                     );
 
-                    // Randomize answers only for new questions
+                    // Randomize answers based on setting and history
                     if (!userSelections) {
-                        answersArray.sort(() => Math.random() - 0.5);
-                        // Save randomized order to history item
+                        if (appSettings.shuffleAnswers) {
+                            answersArray.sort(() => Math.random() - 0.5);
+                        } else {
+                            // Keep original file order (sorted by id)
+                            answersArray.sort((a, b) => a.id - b.id);
+                        }
+                        // Save order to history item for consistency
                         questionHistory[historyIndex].randomizedAnswers =
                             answersArray;
                     } else {
-                        // Use stored order from history
+                        // Use stored order from history (maintains consistency)
                         const storedOrder =
                             questionHistory[historyIndex].randomizedAnswers;
                         if (storedOrder) {
